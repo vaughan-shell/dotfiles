@@ -4,8 +4,11 @@ import XMonad
 import Data.Monoid
 import System.Exit
 import XMonad.Actions.UpdatePointer
-import XMonad.Hooks.ManageDocks
+import XMonad.Hooks.ManageDocks 
+import XMonad.Hooks.DynamicLog
+import XMonad.Hooks.WorkspaceHistory
 import XMonad.Layout.Spacing
+import XMonad.Util.EZConfig
 import XMonad.Util.Run
 import XMonad.Util.SpawnOnce
 import qualified XMonad.StackSet as W
@@ -26,7 +29,7 @@ myClickJustFocuses = False
 
 -- Width of the window border in pixels.
 --
-myBorderWidth   = 2
+myBorderWidth   = 0
 
 -- modMask lets you specify which modkey you want to use. The default
 -- is mod1Mask ("left alt").  You may also consider using mod3Mask
@@ -59,16 +62,28 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- launch a terminal
     [ ((modm,               xK_Return), spawn $ XMonad.terminal conf)
 
-    -- launch dmenu
-    , ((modm,               xK_p     ), spawn "rofi -show run")
-
-    -- launch gmrun
-    , ((modm .|. shiftMask, xK_p     ), spawn "gmrun")
-
+    -- launch surf (duckduckgo.com)
+    , ((modm,               xK_w     ), spawn "surf duckduckgo.com")
+    
+    -- lock screen with i3lock (bar version)
+    , ((modm .|. shiftMask, xK_l     ), spawn "./lockbar.sh")
+    
+    -- hotkey for rofi run
+    , ((0,                  xK_Super_L), spawn "rofi -show run")
+   
+    -- volume up
+    , ((0,                  xK_Page_Up), spawn "amixer -D pulse set Master 10%+")
+    
+    -- volume down
+    , ((0,                  xK_Page_Down), spawn "amixer -D pulse set Master 10%-")  
+ 
     -- close focused window
     , ((modm .|. shiftMask, xK_c     ), kill)
 
-     -- Rotate through the available layout algorithms
+    -- select a window to kill (using xkill)
+    , ((modm .|. shiftMask, xK_Escape), spawn "xkill")
+
+    -- Rotate through the available layout algorithms
     , ((modm,               xK_space ), sendMessage NextLayout)
 
     --  Reset the layouts on the current workspace to default
@@ -79,7 +94,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
 
     -- Move focus to the next window
     , ((modm,               xK_Tab   ), windows W.focusDown)
-
+    
     -- Move focus to the next window
     , ((modm,               xK_j     ), windows W.focusDown)
 
@@ -144,7 +159,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     -- mod-shift-{w,e,r}, Move client to screen 1, 2, or 3
     --
     [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-        | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
+        | (key, sc) <- zip [xK_e, xK_r] [0..]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
 
 
@@ -182,7 +197,7 @@ myLayout = avoidStruts (tiled ||| Mirror tiled ||| Full)
   where
      -- default tiling algorithm partitions the screen into two panes
      -- spacing _ spaces otu windows by _ pixels
-     tiled   = spacing 15 $ Tall nmaster delta ratio
+     tiled   = spacing 0 $ Tall nmaster delta ratio
 
      -- The default number of windows in the master pane
      nmaster = 1
@@ -211,6 +226,7 @@ myLayout = avoidStruts (tiled ||| Mirror tiled ||| Full)
 myManageHook = composeAll
     [ className =? "MPlayer"        --> doFloat
     , className =? "Gimp"           --> doFloat
+    , className =? "Steam"          --> doFloat
     , resource  =? "desktop_window" --> doIgnore
     , resource  =? "kdesktop"       --> doIgnore ]
 
@@ -246,18 +262,16 @@ myLogHook = updatePointer (0.25, 0.25) (0.25, 0.25)
 --
 -- By default, do nothing.
 myStartupHook = do
-        spawnOnce "compton &"
-        spawnOnce "nitrogen --restore"
-
+        spawnOnce "picom -b --experimental-backends &"
+        spawnOnce "nitrogen --restore &"
 
 ------------------------------------------------------------------------
 -- Now run xmonad with all the defaults we set up.
 
 -- Run xmonad with the settings you specify. No need to modify this.
 --
-main = do
-  xmproc <- spawnPipe "xmobar -x 1 /home/vf/.config/xmobar/xmobarrc"
-  xmonad $ docks defaults
+main = xmonad defaults
+
 
 -- A structure containing your configuration settings, overriding
 -- fields in the default config. Any you don't override, will
@@ -284,8 +298,8 @@ defaults = def {
         layoutHook         = myLayout,
         manageHook         = myManageHook,
         handleEventHook    = myEventHook,
-        logHook            = myLogHook,
-        startupHook        = myStartupHook
+        startupHook        = myStartupHook,
+        logHook            = myLogHook
     }
 
 -- | Finally, a copy of the default bindings in simple textual tabular format.
