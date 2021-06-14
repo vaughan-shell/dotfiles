@@ -116,7 +116,11 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# Neofetch Alias: displays custom ascii art instead of OS logo
-alias neofetch='neofetch --source /home/vf/monkey.ascii'
+# npx alacritty-themes alias: type "themes" to select a new alacritty theme.
+alias themes='npx alacritty-themes'
 
-neofetch
+# pinguco color script alias
+alias penguin='./pinguco.sh'
+
+fortune
+penguin
